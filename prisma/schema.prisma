@@ -1,7 +1,9 @@
 // Prisma ORM 7: la URL de conexión NO va aquí, va en prisma.config.ts
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs" // Nest compila a CommonJS
+  importFileExtension = "" // imports sin ".ts", resolubles en dist/
 }
 
 datasource db {
