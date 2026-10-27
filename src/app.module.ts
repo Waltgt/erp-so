@@ -5,6 +5,7 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter'
 import { validarEntorno } from './config/env.validation';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
+import { ProductosModule } from './modules/productos/productos.module';
 import { ProveedoresModule } from './modules/proveedores/proveedores.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -21,6 +22,7 @@ import { PrismaModule } from './prisma/prisma.module';
     UsuariosModule,
     ClientesModule,
     ProveedoresModule,
+    ProductosModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })

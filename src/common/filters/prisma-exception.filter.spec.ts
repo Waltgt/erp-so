@@ -25,13 +25,13 @@ describe('PrismaExceptionFilter', () => {
       const r = filtro.traducir(
         errorPrisma('P2002', {
           kind: 'UniqueConstraintViolation',
-          constraint: { index: 'productos_sku_key' },
-          table: 'productos',
+          constraint: { index: 'usuarios_email_key' },
+          table: 'usuarios',
         }),
       );
       expect(r).toEqual({
         statusCode: HttpStatus.CONFLICT,
-        message: 'Registro duplicado: sku',
+        message: 'Registro duplicado: email',
         error: 'Conflict',
       });
     });
@@ -45,6 +45,13 @@ describe('PrismaExceptionFilter', () => {
       );
       expect(r.statusCode).toBe(HttpStatus.CONFLICT);
       expect(r.message).toBe('NIT ya registrado');
+    });
+
+    it('P2002 en productos_sku_key → 409 "SKU ya registrado"', () => {
+      const r = filtro.traducir(
+        errorPrisma('P2002', { constraint: { index: 'productos_sku_key' } }),
+      );
+      expect(r.message).toBe('SKU ya registrado');
     });
 
     it('P2002 en proveedores_nit_key → 409 "NIT ya registrado"', () => {

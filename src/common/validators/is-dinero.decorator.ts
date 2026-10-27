@@ -10,9 +10,9 @@ const PATRON_DINERO = /^\d{1,10}(\.\d{1,2})?$/;
 // Dinero en un DTO: acepta string ("12.50") o number (12.5) y lo deja
 // como string. El servicio lo convierte con new Prisma.Decimal(valor);
 // nunca se hacen cálculos con number de JS.
-export function IsDinero(): PropertyDecorator {
+export function IsDinero({ opcional = false } = {}): PropertyDecorator {
   return applyDecorators(
-    ApiProperty({ type: String, example: '12.50' }),
+    ApiProperty({ type: String, example: '12.50', required: !opcional }),
     Transform(({ value }: { value: unknown }) =>
       typeof value === 'number' ? String(value) : value,
     ),

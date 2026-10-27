@@ -71,6 +71,15 @@ export class ProveedoresService {
     return conConteo(proveedor);
   }
 
+  // Lo usa productos: proveedorId debe ser un proveedor activo
+  async estaActivo(id: number): Promise<boolean> {
+    const proveedor = await this.prisma.proveedor.findUnique({
+      where: { id },
+      select: { activo: true },
+    });
+    return proveedor?.activo === true;
+  }
+
   // NIT repetido: proveedores_nit_key → P2002 → 409 "NIT ya registrado"
   crear(dto: CrearProveedorDto): Promise<Proveedor> {
     return this.prisma.proveedor.create({
