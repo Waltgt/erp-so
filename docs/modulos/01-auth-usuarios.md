@@ -32,6 +32,7 @@
 - Login con email inexistente y login con contraseña incorrecta responden el MISMO 401
   con el mismo mensaje (no revelar qué emails existen).
 - Rate limit en login con `@nestjs/throttler`: 5 intentos por minuto por IP.
+  Se complementa con Nginx en la fase 6 (ver `docs/infra/pendientes.md`).
 - Un ADMIN no puede desactivarse ni quitarse el rol ADMIN a sí mismo.
 - No se puede desactivar ni degradar al ÚLTIMO admin activo.
 

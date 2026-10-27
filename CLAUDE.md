@@ -43,6 +43,9 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
 7. No ejecutes comandos por SSH en las VMs ni cambies su configuración (pg_hba.conf, ufw, netplan).
    Si hace falta un cambio en una VM, dame los comandos exactos para que yo los ejecute.
 8. Antes de terminar una tarea, haz una recapitulación: qué cambió, cómo verificarlo y qué queda pendiente.
+9. Las tareas de módulos (docs/modulos/) solo tocan código del repositorio.
+    Cualquier cambio de infraestructura (Nginx, ufw, PostgreSQL, MinIO, PM2)
+    se anota en docs/infra/pendientes.md en lugar de pedírmelo en ese momento.
 
 ## Decisiones de diseño (no cambiarlas sin preguntar)
 
