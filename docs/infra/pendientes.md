@@ -97,3 +97,26 @@ hay que ajustar ese valor.
 
 **Verificación:** con Nginx funcionando, 5 logins fallidos desde una PC no deben bloquear
 el login desde otra.
+
+---
+
+## 3. (Opcional) Búsqueda que ignore tildes: extensión `unaccent` (server-db)
+
+**Origen:** módulo 02 (clientes), criterio "`?buscar=perez` encuentra a Juan Pérez".
+
+**Estado actual:** la búsqueda usa `ILIKE` (Prisma `mode: 'insensitive'`): no distingue
+mayúsculas, pero **no ignora tildes** (`perez` no encuentra "Pérez"). La especificación lo
+acepta si se documenta; no hace falta para cumplir el módulo.
+
+**Si se quiere:** `unaccent` es una extensión *trusted* desde PostgreSQL 13: la puede crear
+cualquier rol con permiso `CREATE` sobre la base `erp_db`. Si `erp_owner` no lo tiene, la
+crea un superusuario (no hace falta darle más permisos a `erp_owner`):
+
+```bash
+sudo -u postgres psql -d erp_db -c 'CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA erp;'
+```
+
+Después hay que cambiar el backend: la búsqueda de clientes pasaría a SQL crudo con
+`unaccent(nombre) ILIKE unaccent($1)`, porque Prisma no soporta `unaccent` en `where`. Para
+que use índice haría falta además un índice de expresión (con una función `IMMUTABLE`
+que envuelva a `unaccent`), lo que implica una migración nueva.

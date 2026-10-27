@@ -4,6 +4,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { validarEntorno } from './config/env.validation';
 import { AuthModule } from './modules/auth/auth.module';
+import { ClientesModule } from './modules/clientes/clientes.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -17,6 +18,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     AuthModule,
     UsuariosModule,
+    ClientesModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })

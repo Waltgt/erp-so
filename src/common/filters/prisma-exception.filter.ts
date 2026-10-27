@@ -24,6 +24,12 @@ const CAMPOS_INDICES_MANUALES: Record<string, string> = {
   carpetas_nombre_unico: 'nombre',
 };
 
+// Mensaje específico para un índice único (si no está aquí, se usa
+// "Registro duplicado: <campo>")
+const MENSAJES_DUPLICADO: Record<string, string> = {
+  clientes_nit_unico: 'NIT ya registrado',
+};
+
 const PG_CHECK_VIOLATION = '23514';
 
 export interface RespuestaError {
@@ -66,6 +72,10 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
     switch (exception.code) {
       case 'P2002': {
+        const mensaje = MENSAJES_DUPLICADO[causa?.constraint?.index ?? ''];
+        if (mensaje) {
+          return conflicto(mensaje);
+        }
         const campo = this.campoDuplicado(causa);
         return conflicto(
           campo ? `Registro duplicado: ${campo}` : 'Registro duplicado',

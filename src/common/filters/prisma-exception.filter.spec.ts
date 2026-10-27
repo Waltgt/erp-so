@@ -36,7 +36,7 @@ describe('PrismaExceptionFilter', () => {
       });
     });
 
-    it('P2002 con índice manual (clientes_nit_unico) → 409 con campo nit', () => {
+    it('P2002 en clientes_nit_unico → 409 "NIT ya registrado"', () => {
       const r = filtro.traducir(
         errorPrisma('P2002', {
           kind: 'UniqueConstraintViolation',
@@ -44,7 +44,16 @@ describe('PrismaExceptionFilter', () => {
         }),
       );
       expect(r.statusCode).toBe(HttpStatus.CONFLICT);
-      expect(r.message).toBe('Registro duplicado: nit');
+      expect(r.message).toBe('NIT ya registrado');
+    });
+
+    it('P2002 con índice manual sin mensaje propio → campo del mapa', () => {
+      const r = filtro.traducir(
+        errorPrisma('P2002', {
+          constraint: { index: 'carpetas_nombre_unico' },
+        }),
+      );
+      expect(r.message).toBe('Registro duplicado: nombre');
     });
 
     it('P2002 con fields → 409 con los campos', () => {
