@@ -25,13 +25,13 @@ describe('PrismaExceptionFilter', () => {
       const r = filtro.traducir(
         errorPrisma('P2002', {
           kind: 'UniqueConstraintViolation',
-          constraint: { index: 'proveedores_nit_key' },
-          table: 'proveedores',
+          constraint: { index: 'productos_sku_key' },
+          table: 'productos',
         }),
       );
       expect(r).toEqual({
         statusCode: HttpStatus.CONFLICT,
-        message: 'Registro duplicado: nit',
+        message: 'Registro duplicado: sku',
         error: 'Conflict',
       });
     });
@@ -44,6 +44,13 @@ describe('PrismaExceptionFilter', () => {
         }),
       );
       expect(r.statusCode).toBe(HttpStatus.CONFLICT);
+      expect(r.message).toBe('NIT ya registrado');
+    });
+
+    it('P2002 en proveedores_nit_key → 409 "NIT ya registrado"', () => {
+      const r = filtro.traducir(
+        errorPrisma('P2002', { constraint: { index: 'proveedores_nit_key' } }),
+      );
       expect(r.message).toBe('NIT ya registrado');
     });
 

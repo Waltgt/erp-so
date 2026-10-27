@@ -28,6 +28,7 @@ const CAMPOS_INDICES_MANUALES: Record<string, string> = {
 // "Registro duplicado: <campo>")
 const MENSAJES_DUPLICADO: Record<string, string> = {
   clientes_nit_unico: 'NIT ya registrado',
+  proveedores_nit_key: 'NIT ya registrado',
 };
 
 const PG_CHECK_VIOLATION = '23514';

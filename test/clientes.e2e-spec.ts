@@ -1,48 +1,16 @@
-import { Global, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { PrismaExceptionFilter } from '../src/common/filters/prisma-exception.filter';
-import { configurarApp } from '../src/configurar-app';
 import { Cliente, Rol } from '../src/generated/prisma/client';
-import { AuthModule } from '../src/modules/auth/auth.module';
 import { ClientesModule } from '../src/modules/clientes/clientes.module';
-import { PrismaService } from '../src/prisma/prisma.service';
+import { AppPrueba, crearAppPrueba } from './utils/app-prueba';
 
-// Guards, JWT, validación y filtro reales; Prisma en memoria. Los usuarios
-// tienen id = posición del rol + 1 (ADMIN=1, VENDEDOR=2, ...).
-const ROLES = [Rol.ADMIN, Rol.VENDEDOR, Rol.BODEGUERO, Rol.COMPRAS];
+type Where = { id?: number; activo?: boolean };
 
 function crearPrismaFalso(clientes: Cliente[]) {
   const fecha = new Date('2026-10-01T00:00:00Z');
-  type Where = { id?: number; activo?: boolean };
   const coincide = (c: Cliente, where: Where = {}) =>
     (where.id === undefined || c.id === where.id) &&
     (where.activo === undefined || c.activo === where.activo);
 
-  const falso = {
-    usuario: {
-      findUnique: ({ where }: { where: { id: number } }) => {
-        const rol = ROLES[where.id - 1];
-        return Promise.resolve(
-          rol
-            ? {
-                id: where.id,
-                nombre: rol,
-                email: `${rol.toLowerCase()}@empresa.com`,
-                rol,
-                activo: true,
-                creadoEn: fecha,
-                actualizadoEn: fecha,
-              }
-            : null,
-        );
-      },
-    },
+  return {
     cliente: {
       findMany: ({ where }: { where: Where }) =>
         Promise.resolve(clientes.filter((c) => coincide(c, where))),
@@ -72,14 +40,11 @@ function crearPrismaFalso(clientes: Cliente[]) {
     },
     $transaction: (ops: Promise<unknown>[]) => Promise.all(ops),
   };
-  return falso;
 }
 
 describe('Clientes (e2e)', () => {
-  let app: NestExpressApplication;
-  let servidor: App;
+  let prueba: AppPrueba;
   let clientes: Cliente[];
-  const token: Partial<Record<Rol, string>> = {};
 
   beforeEach(async () => {
     const fecha = new Date('2026-10-01T00:00:00Z');
@@ -96,66 +61,17 @@ describe('Clientes (e2e)', () => {
         actualizadoEn: fecha,
       },
     ];
-
-    @Global()
-    @Module({
-      providers: [
-        { provide: PrismaService, useValue: crearPrismaFalso(clientes) },
-      ],
-      exports: [PrismaService],
-    })
-    class PrismaFalsoModule {}
-
-    const modulo = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          ignoreEnvFile: true,
-          load: [() => ({ JWT_SECRET: 'x'.repeat(32), JWT_EXPIRES_IN: '1h' })],
-        }),
-        PrismaFalsoModule,
-        AuthModule,
-        ClientesModule,
-      ],
-      providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
-    }).compile();
-
-    app = modulo.createNestApplication<NestExpressApplication>();
-    configurarApp(app);
-    await app.init();
-    servidor = app.getHttpServer();
-
-    const jwt = app.get(JwtService);
-    for (const [i, rol] of ROLES.entries()) {
-      token[rol] = await jwt.signAsync({ sub: i + 1, rol });
-    }
+    prueba = await crearAppPrueba([ClientesModule], crearPrismaFalso(clientes));
   });
 
   afterEach(async () => {
-    await app.close();
+    await prueba.app.close();
   });
 
-  const como = (rol: Rol) => ({
-    get: (ruta: string) =>
-      request(servidor).get(ruta).set('Authorization', `Bearer ${token[rol]}`),
-    post: (ruta: string, body: object) =>
-      request(servidor)
-        .post(ruta)
-        .set('Authorization', `Bearer ${token[rol]}`)
-        .send(body),
-    patch: (ruta: string, body: object) =>
-      request(servidor)
-        .patch(ruta)
-        .set('Authorization', `Bearer ${token[rol]}`)
-        .send(body),
-    delete: (ruta: string) =>
-      request(servidor)
-        .delete(ruta)
-        .set('Authorization', `Bearer ${token[rol]}`),
-  });
+  const como = (rol: Rol) => prueba.como(rol);
 
-  it('sin token: 401', () => {
-    return request(servidor).get('/api/clientes').expect(401);
+  it('sin token: 401', async () => {
+    expect((await prueba.sinToken().get('/api/clientes')).status).toBe(401);
   });
 
   it.each([Rol.BODEGUERO, Rol.COMPRAS])(

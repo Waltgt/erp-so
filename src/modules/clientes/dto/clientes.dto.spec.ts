@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { ActualizarClienteDto } from './actualizar-cliente.dto';
-import { normalizarNit } from './campos-cliente';
+import { normalizarNit } from '../../../common/validators/campos-contacto';
 import { CrearClienteDto } from './crear-cliente.dto';
 import { ListarClientesQueryDto } from './listar-clientes.dto';
 

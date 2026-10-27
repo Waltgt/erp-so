@@ -9,12 +9,11 @@ import {
   RespuestaPaginada,
   respuestaPaginada,
 } from '../../common/dto/paginacion.dto';
-import { escaparLike } from '../../common/utils/escapar-like';
+import { busquedaNombreONit } from '../../common/utils/busqueda';
 import { Cliente, Prisma, Rol } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsuarioPublico } from '../usuarios/usuario.types';
 import { ActualizarClienteDto } from './dto/actualizar-cliente.dto';
-import { normalizarNit } from './dto/campos-cliente';
 import { CrearClienteDto } from './dto/crear-cliente.dto';
 import { ListarClientesQueryDto } from './dto/listar-clientes.dto';
 
@@ -32,7 +31,7 @@ export class ClientesService {
 
     const where: Prisma.ClienteWhereInput = {
       ...(query.incluirInactivos ? {} : { activo: true }),
-      ...(query.buscar ? { OR: this.condicionesBusqueda(query.buscar) } : {}),
+      ...(query.buscar ? { OR: busquedaNombreONit(query.buscar) } : {}),
     };
 
     const [data, total] = await this.prisma.$transaction([
@@ -106,19 +105,5 @@ export class ClientesService {
       where: { id },
       data: { activo: false },
     });
-  }
-
-  // Nombre: contiene el texto, sin distinguir mayúsculas (no ignora tildes).
-  // NIT: contiene el texto normalizado igual que al guardar ("1234567-8"
-  // encuentra "12345678").
-  private condicionesBusqueda(buscar: string): Prisma.ClienteWhereInput[] {
-    const condiciones: Prisma.ClienteWhereInput[] = [
-      { nombre: { contains: escaparLike(buscar), mode: 'insensitive' } },
-    ];
-    const nit = normalizarNit(buscar);
-    if (nit) {
-      condiciones.push({ nit: { contains: escaparLike(nit) } });
-    }
-    return condiciones;
   }
 }

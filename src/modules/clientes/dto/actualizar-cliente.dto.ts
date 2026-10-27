@@ -1,29 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, ValidateIf } from 'class-validator';
+import { IsBoolean } from 'class-validator';
+import { SiViene } from '../../../common/validators/si-viene';
 import {
   IsDireccion,
-  IsEmailCliente,
+  IsEmailContacto,
   IsNit,
-  IsNombreCliente,
+  IsNombreEntidad,
   IsTelefono,
-} from './campos-cliente';
-
-// Si el campo no viene, no se valida. Si viene null, SÍ se valida (y falla):
-// nit y nombre son NOT NULL. @IsOptional() dejaría pasar el null.
-const siViene = ValidateIf((_dto, valor) => valor !== undefined);
+} from '../../../common/validators/campos-contacto';
 
 // Todos opcionales; email/telefono/direccion aceptan null para borrarlos.
 // activo: solo ADMIN (true reactiva, false equivale a DELETE); otro rol → 403.
 export class ActualizarClienteDto {
-  @siViene
+  @SiViene()
   @IsNit()
   nit?: string;
 
-  @siViene
-  @IsNombreCliente({ opcional: true })
+  @SiViene()
+  @IsNombreEntidad({ opcional: true })
   nombre?: string;
 
-  @IsEmailCliente()
+  @IsEmailContacto()
   email?: string | null;
 
   @IsTelefono()
@@ -35,7 +32,7 @@ export class ActualizarClienteDto {
   @ApiPropertyOptional({
     description: 'Solo ADMIN: true reactiva el cliente, false lo desactiva',
   })
-  @siViene
+  @SiViene()
   @IsBoolean()
   activo?: boolean;
 }

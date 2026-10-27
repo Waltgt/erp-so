@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export const LIMITE_MAXIMO = 100;
 
@@ -36,6 +44,23 @@ export class ListadoQueryDto extends PaginacionQueryDto {
   )
   @IsBoolean()
   incluirInactivos: boolean = false;
+}
+
+// Listado con ?buscar= (en qué campos busca lo define cada módulo).
+// Se recorta; si queda vacío se ignora.
+export class ListadoBusquedaQueryDto extends ListadoQueryDto {
+  @ApiPropertyOptional({
+    description:
+      'Texto a buscar, sin distinguir mayúsculas (no ignora tildes). Ver cada endpoint',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() || undefined : value,
+  )
+  @IsString()
+  @MaxLength(100)
+  buscar?: string;
 }
 
 export interface RespuestaPaginada<T> {

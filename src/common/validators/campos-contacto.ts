@@ -8,7 +8,10 @@ import {
   IsString,
   Matches,
   MaxLength,
+  NotEquals,
 } from 'class-validator';
+
+// Campos comunes a clientes y proveedores (NIT, nombre, datos de contacto)
 
 export const NIT_CONSUMIDOR_FINAL = 'CF';
 
@@ -22,12 +25,14 @@ export function normalizarNit(valor: string): string {
 // o "CF". No se valida el dígito verificador.
 const PATRON_NIT = /^(CF|\d{1,19}[0-9K])$/;
 
-export function IsNit(): PropertyDecorator {
+// permitirCF: clientes sí (consumidor final); proveedores no (400)
+export function IsNit({ permitirCF = true } = {}): PropertyDecorator {
   return applyDecorators(
     ApiProperty({
       example: '1234567-8',
-      description:
-        'Se normaliza: sin espacios ni guiones, en mayúsculas. "CF" = consumidor final',
+      description: permitirCF
+        ? 'Se normaliza: sin espacios ni guiones, en mayúsculas. "CF" = consumidor final'
+        : 'Se normaliza: sin espacios ni guiones, en mayúsculas. No admite "CF"',
     }),
     Transform(({ value }: { value: unknown }) =>
       typeof value === 'string' ? normalizarNit(value) : value,
@@ -37,12 +42,23 @@ export function IsNit(): PropertyDecorator {
       message: 'nit debe ser "CF" o dígitos con dígito verificador (0-9 o K)',
     }),
     MaxLength(20),
+    ...(permitirCF
+      ? []
+      : [
+          NotEquals(NIT_CONSUMIDOR_FINAL, {
+            message: 'nit "CF" (consumidor final) no es válido aquí',
+          }),
+        ]),
   );
 }
 
-export function IsNombreCliente({ opcional = false } = {}): PropertyDecorator {
+// Nombre o razón social (VarChar(150))
+export function IsNombreEntidad({
+  opcional = false,
+  ejemplo = 'Juan Pérez',
+} = {}): PropertyDecorator {
   return applyDecorators(
-    ApiProperty({ example: 'Juan Pérez', maxLength: 150, required: !opcional }),
+    ApiProperty({ example: ejemplo, maxLength: 150, required: !opcional }),
     Transform(({ value }: { value: unknown }) =>
       typeof value === 'string' ? value.trim() : value,
     ),
@@ -62,7 +78,7 @@ const vacioANull = ({ value }: { value: unknown }): unknown => {
   return recortado === '' ? null : recortado;
 };
 
-export function IsEmailCliente(): PropertyDecorator {
+export function IsEmailContacto(): PropertyDecorator {
   return applyDecorators(
     ApiPropertyOptional({
       example: 'juan@correo.com',
@@ -99,5 +115,23 @@ export function IsDireccion(): PropertyDecorator {
     IsOptional(),
     IsString(),
     MaxLength(255),
+  );
+}
+
+// Texto libre opcional (ej. nombre de la persona de contacto)
+export function IsTextoOpcional(
+  maximo: number,
+  ejemplo?: string,
+): PropertyDecorator {
+  return applyDecorators(
+    ApiPropertyOptional({
+      example: ejemplo,
+      nullable: true,
+      maxLength: maximo,
+    }),
+    Transform(vacioANull),
+    IsOptional(),
+    IsString(),
+    MaxLength(maximo),
   );
 }

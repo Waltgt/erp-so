@@ -1,19 +1,19 @@
 import {
   IsDireccion,
-  IsEmailCliente,
+  IsEmailContacto,
   IsNit,
-  IsNombreCliente,
+  IsNombreEntidad,
   IsTelefono,
-} from './campos-cliente';
+} from '../../../common/validators/campos-contacto';
 
 export class CrearClienteDto {
   @IsNit()
   nit!: string;
 
-  @IsNombreCliente()
+  @IsNombreEntidad()
   nombre!: string;
 
-  @IsEmailCliente()
+  @IsEmailContacto()
   email?: string | null;
 
   @IsTelefono()
