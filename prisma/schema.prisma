@@ -1,0 +1,187 @@
+// Prisma ORM 7: la URL de conexión NO va aquí, va en prisma.config.ts
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────
+
+enum Rol {
+  ADMIN
+  VENDEDOR
+  BODEGUERO
+  COMPRAS
+}
+
+enum EstadoVenta {
+  COMPLETADA
+  ANULADA
+}
+
+enum TipoArchivo {
+  MUSICA
+  DOCUMENTO
+  IMAGEN
+  VIDEO
+  OTRO
+}
+
+// ─── Usuarios ─────────────────────────────────────────────
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  nombre        String   @db.VarChar(100)
+  email         String   @unique @db.VarChar(150) // se guarda en minúsculas desde la app
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  rol           Rol
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  actualizadoEn DateTime @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+
+  ventas   Venta[]
+  carpetas Carpeta[]
+  archivos ArchivoMultimedia[]
+
+  @@map("usuarios")
+}
+
+// ─── Clientes y proveedores ──────────────────────────────
+
+model Cliente {
+  id            Int      @id @default(autoincrement())
+  nit           String   @db.VarChar(20) // único excepto "CF": índice parcial en SQL
+  nombre        String   @db.VarChar(150)
+  email         String?  @db.VarChar(150)
+  telefono      String?  @db.VarChar(20)
+  direccion     String?  @db.VarChar(255)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  actualizadoEn DateTime @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+
+  ventas Venta[]
+
+  @@index([nombre])
+  @@map("clientes")
+}
+
+model Proveedor {
+  id            Int      @id @default(autoincrement())
+  nit           String   @unique @db.VarChar(20)
+  nombre        String   @db.VarChar(150)
+  contacto      String?  @db.VarChar(100)
+  telefono      String?  @db.VarChar(20)
+  email         String?  @db.VarChar(150)
+  direccion     String?  @db.VarChar(255)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  actualizadoEn DateTime @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+
+  productos Producto[]
+
+  @@map("proveedores")
+}
+
+// ─── Inventario ───────────────────────────────────────────
+
+model Producto {
+  id            Int      @id @default(autoincrement())
+  sku           String   @unique @db.VarChar(50)
+  nombre        String   @db.VarChar(150)
+  descripcion   String?  @db.Text
+  precioVenta   Decimal  @map("precio_venta") @db.Decimal(12, 2)
+  costo         Decimal  @db.Decimal(12, 2)
+  stock         Int      @default(0) // CHECK (stock >= 0) en SQL
+  stockMinimo   Int      @default(0) @map("stock_minimo")
+  proveedorId   Int?     @map("proveedor_id")
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  actualizadoEn DateTime @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+
+  proveedor Proveedor?     @relation(fields: [proveedorId], references: [id], onDelete: Restrict)
+  detalles  DetalleVenta[]
+
+  @@index([proveedorId])
+  @@map("productos")
+}
+
+// ─── Ventas ───────────────────────────────────────────────
+
+model Venta {
+  id              Int         @id @default(autoincrement()) // funciona como correlativo
+  clienteId       Int         @map("cliente_id")
+  usuarioId       Int         @map("usuario_id") // vendedor
+  fecha           DateTime    @default(now()) @db.Timestamptz(3)
+  total           Decimal     @db.Decimal(12, 2)
+  estado          EstadoVenta @default(COMPLETADA)
+  anuladaEn       DateTime?   @map("anulada_en") @db.Timestamptz(3)
+  motivoAnulacion String?     @map("motivo_anulacion") @db.VarChar(255)
+
+  cliente  Cliente        @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  usuario  Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  detalles DetalleVenta[]
+
+  @@index([clienteId])
+  @@index([usuarioId])
+  @@index([fecha])
+  @@map("ventas")
+}
+
+model DetalleVenta {
+  id             Int     @id @default(autoincrement())
+  ventaId        Int     @map("venta_id")
+  productoId     Int     @map("producto_id")
+  cantidad       Int // CHECK (cantidad > 0) en SQL
+  precioUnitario Decimal @map("precio_unitario") @db.Decimal(12, 2) // copia del precio al vender
+  subtotal       Decimal @db.Decimal(12, 2)
+
+  venta    Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@unique([ventaId, productoId])
+  @@index([productoId])
+  @@map("detalle_venta")
+}
+
+// ─── Archivos multimedia ──────────────────────────────────
+
+model Carpeta {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @db.VarChar(100)
+  parentId  Int?     @map("parent_id") // null = carpeta raíz
+  usuarioId Int      @map("usuario_id") // dueño
+  creadoEn  DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  parent   Carpeta?            @relation("CarpetaJerarquia", fields: [parentId], references: [id], onDelete: Restrict)
+  hijas    Carpeta[]           @relation("CarpetaJerarquia")
+  usuario  Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  archivos ArchivoMultimedia[]
+
+  // Unicidad (usuario, padre, nombre): el índice real se crea en SQL con
+  // NULLS NOT DISTINCT; se declara aquí para que Prisma no lo borre
+  @@unique([usuarioId, parentId, nombre], map: "carpetas_nombre_unico")
+  @@index([usuarioId, parentId])
+  @@map("carpetas")
+}
+
+model ArchivoMultimedia {
+  id             Int         @id @default(autoincrement())
+  objectKey      String      @unique @map("object_key") @db.Uuid // nombre del objeto en MinIO
+  nombreOriginal String      @map("nombre_original") @db.VarChar(255) // solo para mostrar
+  mimeType       String      @map("mime_type") @db.VarChar(100)
+  tamanoBytes    Int         @map("tamano_bytes") // CHECK (> 0) en SQL; límite real lo pone la API
+  tipo           TipoArchivo
+  duracionSeg    Int?        @map("duracion_seg") // solo música y video
+  carpetaId      Int?        @map("carpeta_id") // null = raíz del usuario
+  usuarioId      Int         @map("usuario_id") // dueño
+  creadoEn       DateTime    @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  carpeta Carpeta? @relation(fields: [carpetaId], references: [id], onDelete: Restrict)
+  usuario Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, carpetaId])
+  @@map("archivos_multimedia")
+}
