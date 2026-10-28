@@ -8,6 +8,7 @@ import { ClientesModule } from './modules/clientes/clientes.module';
 import { ProductosModule } from './modules/productos/productos.module';
 import { ProveedoresModule } from './modules/proveedores/proveedores.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
+import { VentasModule } from './modules/ventas/ventas.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ClientesModule,
     ProveedoresModule,
     ProductosModule,
+    VentasModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })

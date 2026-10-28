@@ -138,6 +138,17 @@ describe('ClientesService', () => {
     });
   });
 
+  describe('estaActivo', () => {
+    it.each([
+      [{ activo: true }, true],
+      [{ activo: false }, false],
+      [null, false],
+    ])('cliente %p → %p', async (cliente, esperado) => {
+      prisma.cliente.findUnique.mockResolvedValue(cliente);
+      await expect(servicio.estaActivo(3)).resolves.toBe(esperado);
+    });
+  });
+
   describe('crear', () => {
     it('guarda los opcionales ausentes como null', async () => {
       await servicio.crear({ nit: 'CF', nombre: 'Consumidor' });

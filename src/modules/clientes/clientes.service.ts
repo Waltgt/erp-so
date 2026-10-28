@@ -54,6 +54,15 @@ export class ClientesService {
     return cliente;
   }
 
+  // Lo usa ventas: clienteId debe ser un cliente activo
+  async estaActivo(id: number): Promise<boolean> {
+    const cliente = await this.prisma.cliente.findUnique({
+      where: { id },
+      select: { activo: true },
+    });
+    return cliente?.activo === true;
+  }
+
   // NIT repetido (salvo CF): índice clientes_nit_unico → P2002 → 409
   // "NIT ya registrado" (filtro global)
   crear(dto: CrearClienteDto): Promise<Cliente> {
