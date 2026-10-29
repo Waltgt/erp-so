@@ -84,6 +84,16 @@ describe('router', () => {
     expect((await ir(crear(), '/no/existe')).name).toBe('no-encontrado')
   })
 
+  it('ventas: ADMIN y VENDEDOR; /ventas/nueva no se toma como un :id', async () => {
+    iniciarSesionComo('BODEGUERO')
+    expect((await ir(crear(), '/ventas')).name).toBe('sin-permiso')
+    setActivePinia(createPinia())
+    iniciarSesionComo('VENDEDOR')
+    const router = crear()
+    expect((await ir(router, '/ventas/nueva')).name).toBe('venta-nueva')
+    expect((await ir(router, '/ventas/25')).params.id).toBe('25')
+  })
+
   it('stock bajo: ADMIN, BODEGUERO y COMPRAS (no VENDEDOR)', async () => {
     iniciarSesionComo('VENDEDOR')
     expect((await ir(crear(), '/productos/stock-bajo')).name).toBe('sin-permiso')
@@ -107,8 +117,15 @@ describe('router', () => {
   it('menú: según meta.roles, y solo con rutas que existen', () => {
     const router = crear()
     const nombres = (rol: Rol) => menuPara(router, rol).map((e) => e.ruta)
-    expect(nombres('ADMIN')).toEqual(['inicio', 'clientes', 'productos', 'proveedores', 'usuarios'])
-    expect(nombres('VENDEDOR')).toEqual(['inicio', 'clientes', 'productos'])
+    expect(nombres('ADMIN')).toEqual([
+      'inicio',
+      'ventas',
+      'clientes',
+      'productos',
+      'proveedores',
+      'usuarios',
+    ])
+    expect(nombres('VENDEDOR')).toEqual(['inicio', 'ventas', 'clientes', 'productos'])
     expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos', 'proveedores'])
     expect(nombres('COMPRAS')).toEqual(['inicio', 'productos', 'proveedores'])
     expect(menuPara(router, null)).toEqual([])

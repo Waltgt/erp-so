@@ -253,4 +253,21 @@ function cerrarSesion(): void {
     padding: 1rem;
   }
 }
+
+/* Al imprimir solo queda el contenido de la página */
+@media print {
+  .lateral,
+  .superior,
+  .fondo {
+    display: none !important;
+  }
+
+  .layout {
+    display: block;
+  }
+
+  .contenido {
+    padding: 0;
+  }
+}
 </style>

@@ -34,3 +34,14 @@ a {
   min-height: 100vh;
   color: #64748b;
 }
+
+/* Impresión (ej. el detalle de una venta): sin botones ni navegación */
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+}

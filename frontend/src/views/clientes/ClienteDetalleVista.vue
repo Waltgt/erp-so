@@ -10,6 +10,7 @@ import { computed, ref, watch } from 'vue'
 import { obtenerCliente } from '@/api/clientes'
 import { listarVentas } from '@/api/ventas'
 import AvisoPagina from '@/components/AvisoPagina.vue'
+import EtiquetaEstadoVenta from '@/components/EtiquetaEstadoVenta.vue'
 import { esErrorApi } from '@/api/http'
 import { useApiError } from '@/composables/useApiError'
 import { useFormato } from '@/composables/useFormato'
@@ -133,7 +134,13 @@ function alGuardar(actualizado: Cliente): void {
         @page="ventas.alCambiarPagina"
       >
         <template #empty>Este cliente no tiene ventas.</template>
-        <Column field="id" header="N.º" />
+        <Column header="N.º">
+          <template #body="{ data }">
+            <RouterLink :to="{ name: 'venta', params: { id: (data as VentaResumen).id } }">
+              {{ (data as VentaResumen).id }}
+            </RouterLink>
+          </template>
+        </Column>
         <Column header="Fecha">
           <template #body="{ data }">{{ fecha((data as VentaResumen).fecha) }}</template>
         </Column>
@@ -145,10 +152,7 @@ function alGuardar(actualizado: Cliente): void {
         </Column>
         <Column header="Estado">
           <template #body="{ data }">
-            <Tag
-              :value="(data as VentaResumen).estado === 'COMPLETADA' ? 'Completada' : 'Anulada'"
-              :severity="(data as VentaResumen).estado === 'COMPLETADA' ? 'success' : 'danger'"
-            />
+            <EtiquetaEstadoVenta :estado="(data as VentaResumen).estado" />
           </template>
         </Column>
       </DataTable>
