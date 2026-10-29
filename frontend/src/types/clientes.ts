@@ -1,14 +1,7 @@
 import type { FechaIso, ParametrosPaginacion } from './api'
 
-// Mismos límites que el backend (src/common/validators/campos-contacto.ts),
-// para avisar antes de enviar. La validación que manda es la del servidor.
+// Los límites de los campos están en ./contacto (compartidos con proveedores)
 export const NIT_CONSUMIDOR_FINAL = 'CF'
-export const NIT_MAX = 20
-export const NOMBRE_CLIENTE_MAX = 150
-export const EMAIL_CLIENTE_MAX = 150
-export const TELEFONO_MAX = 20
-export const DIRECCION_MAX = 255
-export const BUSCAR_MAX = 100
 
 export interface Cliente {
   id: number

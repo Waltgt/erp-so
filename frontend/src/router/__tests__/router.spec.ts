@@ -109,9 +109,10 @@ describe('router', () => {
   it('menú: según meta.roles, y solo con rutas que existen', () => {
     const router = crear()
     const nombres = (rol: Rol) => menuPara(router, rol).map((e) => e.ruta)
-    expect(nombres('ADMIN')).toEqual(['inicio', 'clientes', 'productos', 'usuarios'])
+    expect(nombres('ADMIN')).toEqual(['inicio', 'clientes', 'productos', 'proveedores', 'usuarios'])
     expect(nombres('VENDEDOR')).toEqual(['inicio', 'clientes', 'productos'])
-    expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos'])
+    expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos', 'proveedores'])
+    expect(nombres('COMPRAS')).toEqual(['inicio', 'productos', 'proveedores'])
     expect(menuPara(router, null)).toEqual([])
   })
 })

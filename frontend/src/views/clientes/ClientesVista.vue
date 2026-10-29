@@ -14,7 +14,8 @@ import { actualizarCliente, desactivarCliente, listarClientes } from '@/api/clie
 import { useApiError } from '@/composables/useApiError'
 import { useTablaPaginada } from '@/composables/useTablaPaginada'
 import { useAuthStore } from '@/stores/auth'
-import { BUSCAR_MAX, type Cliente } from '@/types/clientes'
+import type { Cliente } from '@/types/clientes'
+import { BUSCAR_MAX } from '@/types/contacto'
 import DialogoCliente from './DialogoCliente.vue'
 
 const auth = useAuthStore()

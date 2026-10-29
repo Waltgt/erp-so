@@ -7,15 +7,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import { actualizarCliente, crearCliente } from '@/api/clientes'
 import CampoFormulario from '@/components/CampoFormulario.vue'
 import { useApiError } from '@/composables/useApiError'
+import { NIT_CONSUMIDOR_FINAL, type Cliente } from '@/types/clientes'
 import {
   DIRECCION_MAX,
-  EMAIL_CLIENTE_MAX,
-  NIT_CONSUMIDOR_FINAL,
+  EMAIL_CONTACTO_MAX,
   NIT_MAX,
-  NOMBRE_CLIENTE_MAX,
+  NOMBRE_ENTIDAD_MAX,
   TELEFONO_MAX,
-  type Cliente,
-} from '@/types/clientes'
+} from '@/types/contacto'
 import {
   cambiosDeCliente,
   datosNuevoCliente,
@@ -110,7 +109,7 @@ async function guardar(): Promise<void> {
         <InputText
           id="cliente-nombre"
           v-model="formulario.nombre"
-          :maxlength="NOMBRE_CLIENTE_MAX"
+          :maxlength="NOMBRE_ENTIDAD_MAX"
           :invalid="!!errores.nombre"
           fluid
         />
@@ -121,7 +120,7 @@ async function guardar(): Promise<void> {
           id="cliente-email"
           v-model="formulario.email"
           type="email"
-          :maxlength="EMAIL_CLIENTE_MAX"
+          :maxlength="EMAIL_CONTACTO_MAX"
           :invalid="!!errores.email"
           autocomplete="off"
           fluid
