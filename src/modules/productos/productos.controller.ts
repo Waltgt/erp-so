@@ -36,9 +36,10 @@ import { ListarProductosQueryDto } from './dto/listar-productos.dto';
 import {
   ProductoRespuestaDto,
   ProductosPaginadosDto,
+  ProductosStockBajoPaginadosDto,
 } from './dto/producto-respuesta.dto';
 import { ProductosService } from './productos.service';
-import type { ProductoVista } from './productos.service';
+import type { ProductoStockBajo, ProductoVista } from './productos.service';
 
 // Lectura: todos los roles (VENDEDOR sin `costo`). Escritura: ADMIN, BODEGUERO.
 @ApiTags('productos')
@@ -70,12 +71,14 @@ export class ProductosController {
   @Roles(Rol.ADMIN, Rol.BODEGUERO, Rol.COMPRAS)
   @ApiOperation({
     summary: 'Productos activos con stock <= stockMinimo',
+    description:
+      'Ordenados de mayor a menor urgencia (faltante = stockMinimo - stock).',
   })
-  @ApiOkResponse({ type: ProductosPaginadosDto })
+  @ApiOkResponse({ type: ProductosStockBajoPaginadosDto })
   stockBajo(
     @Query() query: PaginacionQueryDto,
     @UsuarioActual() actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<ProductoVista>> {
+  ): Promise<RespuestaPaginada<ProductoStockBajo>> {
     return this.productos.stockBajo(query, actor);
   }
 

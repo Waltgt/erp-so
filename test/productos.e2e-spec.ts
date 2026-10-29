@@ -5,7 +5,7 @@ import { AppPrueba, crearAppPrueba } from './utils/app-prueba';
 const REF_STOCK_MINIMO = Symbol('stockMinimo');
 
 type Where = {
-  id?: number;
+  id?: number | { in: number[] };
   activo?: boolean;
   stock?: { gte?: number; lte?: typeof REF_STOCK_MINIMO };
 };
@@ -13,18 +13,26 @@ type Args = {
   where?: Where;
   data?: Record<string, unknown>;
   omit?: { costo?: boolean };
+  include?: unknown;
 };
 
 function crearPrismaFalso(productos: Producto[]) {
   const coincide = (p: Producto, w: Where = {}) =>
-    (w.id === undefined || p.id === w.id) &&
+    (w.id === undefined ||
+      (typeof w.id === 'number' ? p.id === w.id : w.id.in.includes(p.id))) &&
     (w.activo === undefined || p.activo === w.activo) &&
     (w.stock?.gte === undefined || p.stock >= w.stock.gte) &&
     (w.stock?.lte !== REF_STOCK_MINIMO || p.stock <= p.stockMinimo);
   const vista = (p: Producto, args: Args) => {
-    const copia: Partial<Producto> = { ...p };
+    const copia: Partial<Producto> & { proveedor?: unknown } = { ...p };
     if (args.omit?.costo) {
       delete copia.costo;
+    }
+    if (args.include) {
+      copia.proveedor =
+        p.proveedorId === null
+          ? null
+          : { id: p.proveedorId, nombre: 'Proveedor 1', telefono: null };
     }
     return copia;
   };
@@ -94,6 +102,15 @@ function crearPrismaFalso(productos: Producto[]) {
         return Promise.resolve(afectados.map((p) => vista(p, args)));
       },
     },
+    // Solo la consulta de stock bajo: ids ordenados por urgencia, LIMIT/OFFSET
+    $queryRaw: (_sql: TemplateStringsArray, take: number, skip: number) =>
+      Promise.resolve(
+        productos
+          .filter((p) => p.activo && p.stock <= p.stockMinimo)
+          .sort((a, b) => b.stockMinimo - b.stock - (a.stockMinimo - a.stock))
+          .slice(skip, skip + take)
+          .map((p) => ({ id: p.id })),
+      ),
     $transaction: (ops: Promise<unknown>[]) => Promise.all(ops),
   };
 }
@@ -242,6 +259,8 @@ describe('Productos (e2e)', () => {
         id: 2,
         stock: 2,
         stockMinimo: 5,
+        faltante: 3,
+        proveedor: { id: 1, nombre: 'Proveedor 1', telefono: null },
       });
     });
 

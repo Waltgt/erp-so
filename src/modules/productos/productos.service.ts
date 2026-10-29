@@ -23,10 +23,26 @@ import { normalizarSku } from './dto/campos-producto';
 import { CrearProductoDto } from './dto/crear-producto.dto';
 import { ListarProductosQueryDto } from './dto/listar-productos.dto';
 
+// Proveedor resumido en cada producto (para la tabla y para el pedido desde
+// stock bajo). En la misma consulta, sin N+1.
+const INCLUIR_PROVEEDOR = {
+  proveedor: { select: { id: true, nombre: true, telefono: true } },
+} satisfies Prisma.ProductoInclude;
+
+export type ProveedorResumen = {
+  id: number;
+  nombre: string;
+  telefono: string | null;
+};
+
 // Lo que ve cada rol: VENDEDOR recibe el producto SIN `costo`
 export type ProductoVista = Omit<Producto, 'costo'> & {
   costo?: Prisma.Decimal;
+  proveedor: ProveedorResumen | null;
 };
+
+// Stock bajo: cuántas unidades faltan para llegar al mínimo
+export type ProductoStockBajo = ProductoVista & { faltante: number };
 
 // Los que pueden desactivar/reactivar también ven los inactivos
 const ROLES_VEN_INACTIVOS: Rol[] = [Rol.ADMIN, Rol.BODEGUERO];
@@ -60,6 +76,7 @@ export class ProductosService {
       this.prisma.producto.findMany({
         where,
         omit: omitirSegunRol(actor),
+        include: INCLUIR_PROVEEDOR,
         orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
         ...paginacionPrisma(query),
       }),
@@ -68,26 +85,40 @@ export class ProductosService {
     return respuestaPaginada(data, total, query);
   }
 
-  // Productos activos con stock <= stockMinimo. Compara dos columnas con una
-  // referencia de campo de Prisma (sin SQL crudo).
+  // Productos activos con stock <= stockMinimo, de mayor a menor urgencia
+  // (stockMinimo - stock). Prisma no ordena por una expresión: la página de
+  // ids sale de SQL crudo y los productos (con omit e include) de findMany.
   async stockBajo(
     query: PaginacionQueryDto,
     actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<ProductoVista>> {
+  ): Promise<RespuestaPaginada<ProductoStockBajo>> {
     const where: Prisma.ProductoWhereInput = {
       activo: true,
       stock: { lte: this.prisma.producto.fields.stockMinimo },
     };
+    const { skip, take } = paginacionPrisma(query);
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.producto.findMany({
-        where,
-        omit: omitirSegunRol(actor),
-        orderBy: [{ stock: 'asc' }, { nombre: 'asc' }, { id: 'asc' }],
-        ...paginacionPrisma(query),
-      }),
+    const [pagina, total] = await this.prisma.$transaction([
+      this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT id FROM "erp"."productos"
+        WHERE activo = true AND stock <= stock_minimo
+        ORDER BY (stock_minimo - stock) DESC, nombre ASC, id ASC
+        LIMIT ${take} OFFSET ${skip}`,
       this.prisma.producto.count({ where }),
     ]);
+
+    const ids = pagina.map((fila) => fila.id);
+    const productos = await this.prisma.producto.findMany({
+      where: { id: { in: ids } },
+      omit: omitirSegunRol(actor),
+      include: INCLUIR_PROVEEDOR,
+    });
+    // findMany no respeta el orden de `in`: se reordena según la página
+    const porId = new Map(productos.map((p) => [p.id, p]));
+    const data = ids.flatMap((id) => {
+      const p = porId.get(id);
+      return p ? [{ ...p, faltante: p.stockMinimo - p.stock }] : [];
+    });
     return respuestaPaginada(data, total, query);
   }
 
@@ -95,6 +126,7 @@ export class ProductosService {
     const producto = await this.prisma.producto.findUnique({
       where: { id },
       omit: omitirSegunRol(actor),
+      include: INCLUIR_PROVEEDOR,
     });
     if (!producto) {
       throw new NotFoundException('Producto no encontrado');
@@ -120,6 +152,7 @@ export class ProductosService {
         proveedorId: dto.proveedorId ?? null,
       },
       omit: omitirSegunRol(actor),
+      include: INCLUIR_PROVEEDOR,
     });
   }
 
@@ -149,6 +182,7 @@ export class ProductosService {
         activo: dto.activo,
       },
       omit: omitirSegunRol(actor),
+      include: INCLUIR_PROVEEDOR,
     });
   }
 
@@ -157,6 +191,7 @@ export class ProductosService {
       where: { id },
       data: { activo: false },
       omit: omitirSegunRol(actor),
+      include: INCLUIR_PROVEEDOR,
     });
   }
 
@@ -176,6 +211,7 @@ export class ProductosService {
         where: { id },
         data: { stock: { increment: dto.cantidad } },
         omit: omitirSegunRol(actor),
+        include: INCLUIR_PROVEEDOR,
       });
     } else {
       // UPDATE ... WHERE stock >= n RETURNING *: la condición y la fila
@@ -186,6 +222,7 @@ export class ProductosService {
         where: { id, stock: { gte: -dto.cantidad } },
         data: { stock: { decrement: -dto.cantidad } },
         omit: omitirSegunRol(actor),
+        include: INCLUIR_PROVEEDOR,
       });
       if (!actualizado) {
         // Solo en el camino de error: distinguir inexistente de insuficiente

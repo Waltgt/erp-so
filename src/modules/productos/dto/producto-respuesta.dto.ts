@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+class ProveedorResumenDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'Distribuidora El Sol, S.A.' })
+  nombre!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: '+502 5555-1234' })
+  telefono!: string | null;
+}
+
 // Dinero sale como string (Decimal). `costo` NO viene para VENDEDOR.
 export class ProductoRespuestaDto {
   @ApiProperty({ example: 1 })
@@ -33,6 +44,9 @@ export class ProductoRespuestaDto {
   @ApiProperty({ type: Number, nullable: true, example: 1 })
   proveedorId!: number | null;
 
+  @ApiProperty({ type: ProveedorResumenDto, nullable: true })
+  proveedor!: ProveedorResumenDto | null;
+
   @ApiProperty()
   activo!: boolean;
 
@@ -48,6 +62,25 @@ export class ProductosPaginadosDto {
   data!: ProductoRespuestaDto[];
 
   @ApiProperty({ example: 41 })
+  total!: number;
+
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+}
+
+export class ProductoStockBajoDto extends ProductoRespuestaDto {
+  @ApiProperty({ example: 3, description: 'stockMinimo - stock' })
+  faltante!: number;
+}
+
+export class ProductosStockBajoPaginadosDto {
+  @ApiProperty({ type: [ProductoStockBajoDto] })
+  data!: ProductoStockBajoDto[];
+
+  @ApiProperty({ example: 4 })
   total!: number;
 
   @ApiProperty({ example: 1 })

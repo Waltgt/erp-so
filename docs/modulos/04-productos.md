@@ -23,6 +23,12 @@ OJO: declarar la ruta `stock-bajo` ANTES que `:id` en el controlador.
 - El VENDEDOR no ve el campo `costo` (es información interna). Implementarlo en el servicio
   según el rol, no en el front.
 - `proveedorId`, si viene, debe ser un proveedor activo (400 si no).
+- Agregado el 2026-10-28 para el frontend (docs/frontend/04-productos.md):
+  - Toda respuesta de producto incluye `proveedor: { id, nombre, telefono } | null`, en la
+    misma consulta (el VENDEDOR no puede leer `/api/proveedores`).
+  - `stock-bajo` ordena por urgencia, `(stock_minimo - stock) DESC`, y cada fila trae
+    `faltante` (= stockMinimo - stock). Como Prisma no ordena por expresiones, la página de
+    ids sale de `$queryRaw` y los productos de `findMany`.
 - Cambiar `precioVenta` no afecta ventas anteriores (el precio se copió en `detalle_venta`).
 
 ## Ajuste de stock

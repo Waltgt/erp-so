@@ -46,6 +46,7 @@ describe('ProductosService', () => {
       jest.Mock
     > & { fields: { stockMinimo: unknown } };
     $transaction: jest.Mock;
+    $queryRaw: jest.Mock;
   };
   let proveedores: { estaActivo: jest.Mock };
   let servicio: ProductosService;
@@ -63,6 +64,7 @@ describe('ProductosService', () => {
         fields: { stockMinimo: REF_STOCK_MINIMO },
       },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+      $queryRaw: jest.fn().mockResolvedValue([]),
     };
     proveedores = { estaActivo: jest.fn().mockResolvedValue(true) };
     servicio = new ProductosService(
@@ -162,13 +164,59 @@ describe('ProductosService', () => {
   });
 
   describe('stockBajo', () => {
-    it('activos con stock <= stockMinimo, usando la referencia de campo', async () => {
+    it('el total cuenta activos con stock <= stockMinimo (referencia de campo)', async () => {
       await servicio.stockBajo({ page: 1, limit: 20 }, bodeguero);
-      const { where } = primerArgumento(prisma.producto.findMany) as {
+      const { where } = primerArgumento(prisma.producto.count) as {
         where: { activo: boolean; stock: { lte: unknown } };
       };
       expect(where.activo).toBe(true);
       expect(where.stock.lte).toBe(REF_STOCK_MINIMO);
+    });
+
+    it('la página sale ordenada por urgencia (SQL) con LIMIT/OFFSET', async () => {
+      await servicio.stockBajo({ page: 3, limit: 10 }, bodeguero);
+      const [partes, ...valores] = prisma.$queryRaw.mock.calls[0] as [
+        string[],
+        ...unknown[],
+      ];
+      const sql = partes.join('?');
+      expect(sql).toContain('activo = true AND stock <= stock_minimo');
+      expect(sql).toContain('ORDER BY (stock_minimo - stock) DESC');
+      expect(valores).toEqual([10, 20]);
+    });
+
+    it('respeta el orden de la página, agrega faltante y el proveedor', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ id: 7 }, { id: 3 }]);
+      prisma.producto.findMany.mockResolvedValue([
+        { id: 3, stock: 2, stockMinimo: 3, proveedor: null },
+        { id: 7, stock: 4, stockMinimo: 50, proveedor: { id: 1 } },
+      ]);
+      prisma.producto.count.mockResolvedValue(2);
+
+      const r = await servicio.stockBajo({ page: 1, limit: 20 }, bodeguero);
+
+      expect(primerArgumento(prisma.producto.findMany)).toMatchObject({
+        where: { id: { in: [7, 3] } },
+        include: { proveedor: { select: { nombre: true, telefono: true } } },
+      });
+      expect(r.data.map((p) => [p.id, p.faltante])).toEqual([
+        [7, 46],
+        [3, 1],
+      ]);
+    });
+  });
+
+  describe('proveedor en la respuesta', () => {
+    it('listar incluye el proveedor resumido (id, nombre, teléfono)', async () => {
+      await servicio.listar(
+        { page: 1, limit: 20, incluirInactivos: false },
+        actor(Rol.VENDEDOR),
+      );
+      expect(primerArgumento(prisma.producto.findMany)).toMatchObject({
+        include: {
+          proveedor: { select: { id: true, nombre: true, telefono: true } },
+        },
+      });
     });
   });
 
@@ -266,6 +314,9 @@ describe('ProductosService', () => {
         where: { id: 1, stock: { gte: 5 } },
         data: { stock: { decrement: 5 } },
         omit: {},
+        include: {
+          proveedor: { select: { id: true, nombre: true, telefono: true } },
+        },
       });
       // El stock de la respuesta sale del propio UPDATE, sin lectura aparte
       expect(r.stock).toBe(0);
