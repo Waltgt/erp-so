@@ -50,6 +50,12 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
     (raíz, tsconfig.json) y el frontend (frontend/, su propio tsconfig).
     frontend/ está excluido del tsconfig del backend. No cambies esa exclusión
     ni mezcles imports entre ambos proyectos.
+11. Frontend en frontend/ (Vue 3 + Vite + TypeScript + PrimeVue). Las
+    especificaciones están en docs/frontend/. Ejecuta los comandos npm del
+    frontend DENTRO de frontend/, y los del backend en la raíz.
+12. El frontend nunca decide permisos por sí solo: oculta lo que el rol no
+    puede usar, pero la autorización real es siempre del backend.
+13. Prohibido v-html con datos que vengan de la API o del usuario.
 
 ## Decisiones de diseño (no cambiarlas sin preguntar)
 

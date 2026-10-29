@@ -28,12 +28,14 @@ Backend: docs/modulos/01-auth-usuarios.md
 ## Usuarios (ADMIN)
 
 - Tabla: nombre, email, rol (etiqueta de color por rol), estado (activo/inactivo), fecha
-  de creación. Filtro por texto y por rol. Interruptor "Mostrar inactivos".
+  de creación. Interruptor "Mostrar inactivos". Sin filtro por texto ni por rol:
+  `GET /api/usuarios` no ofrece `?buscar=` ni `?rol=` (decisión del 2026-10-28).
 - Crear y editar en un diálogo: nombre, email, rol y (solo al crear) contraseña con
-  confirmación. En edición, el email no se puede cambiar.
+  confirmación. En edición, el email no se puede cambiar. La contraseña de otro
+  usuario se cambia con "Restablecer contraseña".
 - Acciones por fila: editar, activar/desactivar (con confirmación), restablecer contraseña.
-- En la fila del propio usuario: deshabilitar "desactivar" y el cambio de rol, con un
-  tooltip que explique por qué.
+- En la fila del propio usuario: deshabilitar "desactivar" (con un tooltip que explique
+  por qué) y el cambio de rol (con un texto de ayuda bajo el selector del diálogo).
 - Si el backend responde 409 (último admin), mostrar su mensaje.
 
 ## Criterios de aceptación
