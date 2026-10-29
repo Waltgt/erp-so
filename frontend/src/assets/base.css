@@ -1,0 +1,36 @@
+/* Estilos globales mínimos: el resto viene del tema Aura de PrimeVue */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background: var(--p-surface-50);
+  color: var(--p-text-color);
+}
+
+a {
+  color: var(--p-primary-color);
+}
+
+/* Mientras arranca (verificación de la sesión), antes de montar la app */
+.cargando-app {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: #64748b;
+}
