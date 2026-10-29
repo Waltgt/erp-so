@@ -1,4 +1,4 @@
-import { Global, Module, Type } from '@nestjs/common';
+import { Global, InjectionToken, Module, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
@@ -39,8 +39,17 @@ export const usuariosFalsos = {
   },
 };
 
+// Variables de entorno extra y proveedores reemplazados por un doble
+// (ej. el almacenamiento S3 por uno en memoria)
+export interface OpcionesAppPrueba {
+  config?: Record<string, unknown>;
+  reemplazos?: [token: InjectionToken, valor: unknown][];
+}
+
 export interface AppPrueba {
   app: NestExpressApplication;
+  // Cabecera Authorization, para armar peticiones a mano (ej. multipart)
+  auth: (rol: Rol) => string;
   sinToken: () => request.Agent;
   como: (rol: Rol) => {
     get: (ruta: string) => request.Test;
@@ -53,6 +62,7 @@ export interface AppPrueba {
 export async function crearAppPrueba(
   modulos: Type[],
   prismaFalso: object,
+  opciones: OpcionesAppPrueba = {},
 ): Promise<AppPrueba> {
   @Global()
   @Module({
@@ -66,19 +76,29 @@ export async function crearAppPrueba(
   })
   class PrismaFalsoModule {}
 
-  const modulo = await Test.createTestingModule({
+  const definicion = Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
         isGlobal: true,
         ignoreEnvFile: true,
-        load: [() => ({ JWT_SECRET: 'x'.repeat(32), JWT_EXPIRES_IN: '1h' })],
+        load: [
+          () => ({
+            JWT_SECRET: 'x'.repeat(32),
+            JWT_EXPIRES_IN: '1h',
+            ...opciones.config,
+          }),
+        ],
       }),
       PrismaFalsoModule,
       AuthModule,
       ...modulos,
     ],
     providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
-  }).compile();
+  });
+  for (const [token, valor] of opciones.reemplazos ?? []) {
+    definicion.overrideProvider(token).useValue(valor);
+  }
+  const modulo = await definicion.compile();
 
   const app = modulo.createNestApplication<NestExpressApplication>();
   configurarApp(app);
@@ -93,6 +113,7 @@ export async function crearAppPrueba(
 
   return {
     app,
+    auth: (rol) => `Bearer ${tokens.get(rol)}`,
     sinToken: () => request.agent(servidor),
     como: (rol: Rol) => {
       const auth = `Bearer ${tokens.get(rol)}`;

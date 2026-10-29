@@ -3,7 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { validarEntorno } from './config/env.validation';
+import { ArchivosModule } from './modules/archivos/archivos.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CarpetasModule } from './modules/carpetas/carpetas.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
 import { ProductosModule } from './modules/productos/productos.module';
 import { ProveedoresModule } from './modules/proveedores/proveedores.module';
@@ -25,6 +27,8 @@ import { PrismaModule } from './prisma/prisma.module';
     ProveedoresModule,
     ProductosModule,
     VentasModule,
+    CarpetasModule,
+    ArchivosModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
 })

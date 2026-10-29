@@ -10,7 +10,7 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
 | server-web   | 192.168.56.10 | Nginx: sirve el build de Vue 3 y hace proxy a la API |
 | server-app   | 192.168.56.11 | API NestJS (puerto 3000)                    |
 | server-db    | 192.168.56.12 | PostgreSQL 18 (puerto 5432)                 |
-| server-files | 192.168.56.13 | MinIO, API S3 (puerto 9000)                 |
+| server-files | 192.168.56.13 | Garage, API S3 (puerto 3900)                |
 
 - La PC de desarrollo (Windows, Git Bash) es 192.168.56.1.
 - Firewall `ufw` en todas las VMs: deny incoming por defecto, solo los puertos de la tabla.
@@ -44,7 +44,7 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
    Si hace falta un cambio en una VM, dame los comandos exactos para que yo los ejecute.
 8. Antes de terminar una tarea, haz una recapitulación: qué cambió, cómo verificarlo y qué queda pendiente.
 9. Las tareas de módulos (docs/modulos/) solo tocan código del repositorio.
-    Cualquier cambio de infraestructura (Nginx, ufw, PostgreSQL, MinIO, PM2)
+    Cualquier cambio de infraestructura (Nginx, ufw, PostgreSQL, Garage, PM2)
     se anota en docs/infra/pendientes.md en lugar de pedírmelo en ese momento.
 
 ## Decisiones de diseño (no cambiarlas sin preguntar)
@@ -54,10 +54,10 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
   de la venta, verificando las filas afectadas. El CHECK `stock >= 0` es solo red de seguridad.
 - Borrado lógico (`activo = false`) en usuarios, clientes, proveedores y productos. Las ventas se anulan, no se borran.
 - Roles de la app: ADMIN, VENDEDOR, BODEGUERO, COMPRAS. No hay módulo de compras; COMPRAS gestiona proveedores.
-- Archivos: cada usuario ve solo los suyos; ADMIN ve todos. En MinIO se guardan con un UUID
+- Archivos: cada usuario ve solo los suyos; ADMIN ve todos. En Garage (S3) se guardan con un UUID
   (`object_key`), nunca con el nombre original. Validar en el servicio que la carpeta destino
   pertenezca al mismo usuario.
-- Subida de archivos: stream directo a MinIO (no guardar en disco local). Orden: subir a MinIO,
+- Subida de archivos: stream directo a Garage (no guardar en disco local). Orden: subir a Garage,
   insertar la fila y, si el insert falla, borrar el objeto.
 - Autenticación: JWT propio, contraseñas con bcrypt/argon2, guards por rol.
 - El backend no guarda estado (preparado para PM2 en modo cluster más adelante).

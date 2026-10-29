@@ -12,7 +12,7 @@ uno depende de los anteriores:
 | 3     | 03-proveedores.md     | 01                             |
 | 4     | 04-productos.md       | 03                             |
 | 5     | 05-ventas.md          | 02, 04                         |
-| 6     | 06-archivos.md        | 01 + Fase 4 (MinIO) terminada  |
+| 6     | 06-archivos.md        | 01 + Fase 4 (Garage) terminada |
 
 ## Instrucción para Claude Code (cambiar solo el nombre del archivo)
 

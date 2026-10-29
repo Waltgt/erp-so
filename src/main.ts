@@ -16,7 +16,7 @@ async function bootstrap(): Promise<void> {
   const config = app.get(ConfigService<VariablesEntorno, true>);
   const logger = new Logger('Bootstrap');
 
-  configurarApp(app);
+  configurarApp(app, config.get('TRUST_PROXY', { infer: true }));
 
   const entorno = config.get('NODE_ENV', { infer: true });
   if (entorno !== Entorno.Production) {
