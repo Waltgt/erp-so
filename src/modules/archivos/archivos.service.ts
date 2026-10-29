@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,7 +17,7 @@ import {
 } from '../../common/dto/paginacion.dto';
 import { escaparLike } from '../../common/utils/escapar-like';
 import { VariablesEntorno } from '../../config/env.validation';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma, Rol } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Almacenamiento,
@@ -25,8 +26,10 @@ import {
 import { CarpetasService } from '../carpetas/carpetas.service';
 import { UsuarioPublico } from '../usuarios/usuario.types';
 import {
+  ArchivoListado,
   ArchivoPublico,
   filtroArchivosSegunRol,
+  INCLUIR_DUENO_Y_CARPETA,
   OMITIR_OBJECT_KEY,
 } from './archivo.types';
 import { contentDisposition } from './content-disposition';
@@ -157,12 +160,19 @@ export class ArchivosService {
     }
   }
 
+  // Cada archivo trae su dueño y su carpeta resumidos. ?usuarioId= es solo
+  // para ADMIN (los demás ya ven solo lo suyo).
   async listar(
     query: ListarArchivosQueryDto,
     actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<ArchivoPublico>> {
+  ): Promise<RespuestaPaginada<ArchivoListado>> {
+    if (query.usuarioId !== undefined && actor.rol !== Rol.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede filtrar por usuario');
+    }
+
     const where: Prisma.ArchivoMultimediaWhereInput = {
       ...filtroArchivosSegunRol(actor),
+      ...(query.usuarioId !== undefined ? { usuarioId: query.usuarioId } : {}),
       ...(query.tipo ? { tipo: query.tipo } : {}),
       ...(query.carpetaId !== undefined ? { carpetaId: query.carpetaId } : {}),
       ...(query.buscar
@@ -179,6 +189,7 @@ export class ArchivosService {
       this.prisma.archivoMultimedia.findMany({
         where,
         omit: OMITIR_OBJECT_KEY,
+        include: INCLUIR_DUENO_Y_CARPETA,
         orderBy: [{ creadoEn: 'desc' }, { id: 'desc' }],
         ...paginacionPrisma(query),
       }),

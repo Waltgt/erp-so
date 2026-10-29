@@ -54,6 +54,23 @@ export function formatoTamano(bytes: number): string {
   return `${valor.toLocaleString('es-GT', { maximumFractionDigits: decimales })} ${unidades[i]}`
 }
 
+// 185 → "3:05"; 3725 → "1:02:05"; null (desconocida) → ""
+export function formatoDuracion(segundos: number | null | undefined): string {
+  if (segundos === null || segundos === undefined || !Number.isFinite(segundos) || segundos < 0) {
+    return ''
+  }
+  const total = Math.floor(segundos)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = String(total % 60).padStart(2, '0')
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`
+}
+
 export function useFormato() {
-  return { dinero: formatoDinero, fecha: formatoFecha, tamano: formatoTamano }
+  return {
+    dinero: formatoDinero,
+    fecha: formatoFecha,
+    tamano: formatoTamano,
+    duracion: formatoDuracion,
+  }
 }

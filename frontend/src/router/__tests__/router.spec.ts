@@ -123,11 +123,12 @@ describe('router', () => {
       'clientes',
       'productos',
       'proveedores',
+      'archivos',
       'usuarios',
     ])
-    expect(nombres('VENDEDOR')).toEqual(['inicio', 'ventas', 'clientes', 'productos'])
-    expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos', 'proveedores'])
-    expect(nombres('COMPRAS')).toEqual(['inicio', 'productos', 'proveedores'])
+    expect(nombres('VENDEDOR')).toEqual(['inicio', 'ventas', 'clientes', 'productos', 'archivos'])
+    expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos', 'proveedores', 'archivos'])
+    expect(nombres('COMPRAS')).toEqual(['inicio', 'productos', 'proveedores', 'archivos'])
     expect(menuPara(router, null)).toEqual([])
   })
 })

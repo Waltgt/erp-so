@@ -48,11 +48,17 @@ desde la PC de desarrollo.
 | Método | Ruta                         | Descripción                              |
 |--------|------------------------------|------------------------------------------|
 | POST   | /api/archivos                | multipart: `archivo` + `carpetaId?`      |
-| GET    | /api/archivos                | `?tipo=&carpetaId=&buscar=` paginado      |
+| GET    | /api/archivos                | `?tipo=&carpetaId=&buscar=&usuarioId=` paginado (ver nota) |
 | GET    | /api/archivos/:id            | Metadatos                                |
 | GET    | /api/archivos/:id/url        | `?modo=ver|descargar` → `{ url, expiraEn }` |
 | PATCH  | /api/archivos/:id            | Renombrar (`nombreOriginal`) o mover     |
 | DELETE | /api/archivos/:id            | Borra en S3 y en la base                 |
+
+Nota (agregado el 2026-10-28 para el frontend, docs/frontend/06-archivos.md): en
+`GET /api/archivos` cada archivo trae `usuario: { id, nombre }` (dueño) y
+`carpeta: { id, nombre } | null`, en la misma consulta. `?usuarioId=` es solo para ADMIN
+(otro rol: 403). Las carpetas siguen siendo siempre propias, así que el ADMIN ve los
+archivos de los demás en esta lista, no recorriendo sus carpetas.
 
 ## Reglas de negocio
 

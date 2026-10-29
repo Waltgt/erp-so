@@ -99,6 +99,13 @@ export const rutas: RouteRecordRaw[] = [
         meta: { roles: ['ADMIN', 'COMPRAS', 'BODEGUERO'], titulo: 'Proveedores' },
       },
       {
+        // Todos los roles (cada uno ve lo suyo). ?carpeta=12 y ?vista=todos
+        path: 'archivos',
+        name: 'archivos',
+        component: () => import('@/views/archivos/ArchivosVista.vue'),
+        meta: { titulo: 'Archivos' },
+      },
+      {
         path: 'sin-permiso',
         name: 'sin-permiso',
         component: () => import('@/views/sistema/SinPermisoVista.vue'),

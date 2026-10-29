@@ -69,11 +69,32 @@ function crearPrismaFalso(archivos: ArchivoMultimedia[], carpetas: Carpeta[]) {
         const a = archivo(where);
         return Promise.resolve(a ? sinKey(a, omit) : null);
       },
-      findMany: ({ where, omit }: { where: Where; omit?: OpcionesOmit }) =>
+      // include (listado): dueño y carpeta resumidos
+      findMany: ({
+        where,
+        omit,
+        include,
+      }: {
+        where: Where;
+        omit?: OpcionesOmit;
+        include?: unknown;
+      }) =>
         Promise.resolve(
           archivos
             .filter((a) => coincide(a, where))
-            .map((a) => sinKey(a, omit)),
+            .map((a) => {
+              const c = carpetas.find((x) => x.id === a.carpetaId);
+              return include
+                ? {
+                    ...sinKey(a, omit),
+                    usuario: {
+                      id: a.usuarioId,
+                      nombre: `Usuario ${a.usuarioId}`,
+                    },
+                    carpeta: c ? { id: c.id, nombre: c.nombre } : null,
+                  }
+                : sinKey(a, omit);
+            }),
         ),
       count: ({ where }: { where: Where }) =>
         Promise.resolve(archivos.filter((a) => coincide(a, where)).length),
@@ -330,6 +351,31 @@ describe('Carpetas y archivos (e2e)', () => {
       expect(detalle.status).toBe(200);
       expect(detalle.body).not.toHaveProperty('objectKey');
       expect((await r.get('/api/archivos')).body).toMatchObject({ total: 1 });
+    });
+
+    it('el listado trae dueño y carpeta; ADMIN filtra por ?usuarioId=', async () => {
+      const r = prueba.como(Rol.ADMIN);
+      const delBodeguero = await r.get(`/api/archivos?usuarioId=${BODEGUERO}`);
+      expect(delBodeguero.body).toMatchObject({
+        total: 1,
+        data: [
+          {
+            id: 10,
+            usuario: { id: BODEGUERO },
+            carpeta: { id: 3, nombre: 'Bodega' },
+          },
+        ],
+      });
+      expect(
+        (await r.get(`/api/archivos?usuarioId=${VENDEDOR}`)).body,
+      ).toMatchObject({ total: 0 });
+    });
+
+    it('?usuarioId= con otro rol: 403', async () => {
+      const res = await prueba
+        .como(Rol.BODEGUERO)
+        .get(`/api/archivos?usuarioId=${BODEGUERO}`);
+      expect(res.status).toBe(403);
     });
   });
 

@@ -36,7 +36,7 @@ import { UsuarioActual } from '../../common/decorators/usuario-actual.decorator'
 import type { RespuestaPaginada } from '../../common/dto/paginacion.dto';
 import { OPCIONES_VALIDACION } from '../../configurar-app';
 import type { UsuarioPublico } from '../usuarios/usuario.types';
-import type { ArchivoPublico } from './archivo.types';
+import type { ArchivoListado, ArchivoPublico } from './archivo.types';
 import { ArchivosService } from './archivos.service';
 import type { UrlFirmada } from './archivos.service';
 import { ActualizarArchivoDto } from './dto/actualizar-archivo.dto';
@@ -129,14 +129,16 @@ export class ArchivosController {
 
   @Get()
   @ApiOperation({
-    summary: 'Listado paginado; ?tipo=, ?carpetaId=, ?buscar=',
-    description: 'ADMIN ve los archivos de todos los usuarios.',
+    summary: 'Listado paginado; ?tipo=, ?carpetaId=, ?buscar=, ?usuarioId=',
+    description:
+      'ADMIN ve los archivos de todos los usuarios y puede filtrar por ' +
+      '?usuarioId= (otro rol: 403). Cada archivo trae su dueño y su carpeta.',
   })
   @ApiOkResponse({ type: ArchivosPaginadosDto })
   listar(
     @Query() query: ListarArchivosQueryDto,
     @UsuarioActual() actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<ArchivoPublico>> {
+  ): Promise<RespuestaPaginada<ArchivoListado>> {
     return this.archivos.listar(query, actor);
   }
 

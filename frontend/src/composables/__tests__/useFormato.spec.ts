@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { formatoDinero, formatoFecha, formatoTamano } from '../useFormato'
+import { formatoDinero, formatoDuracion, formatoFecha, formatoTamano } from '../useFormato'
 
 describe('useFormato', () => {
   it('dinero (string del backend) en quetzales', () => {
@@ -23,5 +23,13 @@ describe('useFormato', () => {
     expect(formatoTamano(1536)).toBe('1.5 KB')
     expect(formatoTamano(4 * 1024 * 1024)).toBe('4 MB')
     expect(formatoTamano(15 * 1024 * 1024)).toBe('15 MB')
+  })
+
+  it('duración en m:ss (o h:mm:ss); desconocida vacía', () => {
+    expect(formatoDuracion(185)).toBe('3:05')
+    expect(formatoDuracion(59.9)).toBe('0:59')
+    expect(formatoDuracion(3725)).toBe('1:02:05')
+    expect(formatoDuracion(null)).toBe('')
+    expect(formatoDuracion(Number.NaN)).toBe('')
   })
 })

@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TipoArchivo } from '../../../generated/prisma/client';
 
-// Sin objectKey: es un detalle interno del almacenamiento. Se descarga con
-// GET /archivos/:id/descarga, que verifica el permiso.
+// Sin objectKey: es un detalle interno del almacenamiento. Se reproduce o
+// descarga con la URL firmada de GET /archivos/:id/url, que verifica el permiso.
 export class ArchivoRespuestaDto {
   @ApiProperty({ example: 12 })
   id!: number;
@@ -36,9 +36,26 @@ export class ArchivoRespuestaDto {
   creadoEn!: Date;
 }
 
+class ResumenDto {
+  @ApiProperty({ example: 2 })
+  id!: number;
+
+  @ApiProperty({ example: 'Ana López' })
+  nombre!: string;
+}
+
+// GET /archivos: con el dueño y la carpeta resumidos
+export class ArchivoListadoDto extends ArchivoRespuestaDto {
+  @ApiProperty({ type: ResumenDto, description: 'Dueño' })
+  usuario!: ResumenDto;
+
+  @ApiProperty({ type: ResumenDto, nullable: true, description: 'null = raíz' })
+  carpeta!: ResumenDto | null;
+}
+
 export class ArchivosPaginadosDto {
-  @ApiProperty({ type: [ArchivoRespuestaDto] })
-  data!: ArchivoRespuestaDto[];
+  @ApiProperty({ type: [ArchivoListadoDto] })
+  data!: ArchivoListadoDto[];
 
   @ApiProperty({ example: 41 })
   total!: number;

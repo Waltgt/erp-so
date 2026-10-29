@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Logger,
   NotFoundException,
   PayloadTooLargeException,
@@ -290,6 +291,31 @@ describe('ArchivosService', () => {
         skip: 10,
         take: 10,
       });
+    });
+
+    it('incluye dueño y carpeta resumidos (sin datos sensibles del usuario)', async () => {
+      await servicio.listar(base, ana);
+      expect(
+        argumento<{ include: unknown }>(prisma.archivoMultimedia.findMany)
+          .include,
+      ).toEqual({
+        usuario: { select: { id: true, nombre: true } },
+        carpeta: { select: { id: true, nombre: true } },
+      });
+    });
+
+    it('ADMIN con ?usuarioId=: solo los de ese usuario', async () => {
+      await servicio.listar({ ...base, usuarioId: 5 }, admin);
+      expect(
+        argumento<{ where: unknown }>(prisma.archivoMultimedia.findMany).where,
+      ).toEqual({ usuarioId: 5 });
+    });
+
+    it('?usuarioId= con otro rol: 403 sin consultar', async () => {
+      await expect(
+        servicio.listar({ ...base, usuarioId: 5 }, ana),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.archivoMultimedia.findMany).not.toHaveBeenCalled();
     });
 
     it('ADMIN: todos', async () => {
