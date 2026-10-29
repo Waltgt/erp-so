@@ -61,6 +61,19 @@ export const rutas: RouteRecordRaw[] = [
         meta: { roles: ['ADMIN', 'VENDEDOR'], titulo: 'Cliente' },
       },
       {
+        path: 'productos',
+        name: 'productos',
+        component: () => import('@/views/productos/ProductosVista.vue'),
+        meta: { titulo: 'Productos' },
+      },
+      {
+        // Antes de cualquier productos/:id que se agregue después
+        path: 'productos/stock-bajo',
+        name: 'stock-bajo',
+        component: () => import('@/views/productos/StockBajoVista.vue'),
+        meta: { roles: ['ADMIN', 'BODEGUERO', 'COMPRAS'], titulo: 'Stock bajo' },
+      },
+      {
         path: 'proveedores',
         name: 'proveedores',
         component: () => import('@/views/proveedores/ProveedoresVista.vue'),

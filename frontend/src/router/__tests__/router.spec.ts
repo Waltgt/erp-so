@@ -1,13 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { defineComponent } from 'vue'
 import { createMemoryHistory, type Router } from 'vue-router'
 import { CLAVE_SESION } from '@/stores/auth'
 import type { Rol } from '@/types/auth'
 import { crearRouter, rutaDeRegreso } from '../index'
 import { menuPara } from '../menu'
-
-const Vacia = defineComponent({ template: '<div />' })
 
 function iniciarSesionComo(rol: Rol): void {
   localStorage.setItem(
@@ -27,16 +24,9 @@ function iniciarSesionComo(rol: Rol): void {
   )
 }
 
-// Router de la app (con /usuarios solo para ADMIN) más una ruta de ejemplo
-// de un módulo que aún no existe
+// El router real de la app, con historial en memoria
 function crear(): Router {
-  const router = crearRouter(createMemoryHistory())
-  router.addRoute('principal', {
-    path: 'productos',
-    name: 'productos',
-    component: Vacia,
-  })
-  return router
+  return crearRouter(createMemoryHistory())
 }
 
 async function ir(router: Router, ruta: string) {
@@ -92,6 +82,14 @@ describe('router', () => {
   it('ruta inexistente con sesión: no encontrado', async () => {
     iniciarSesionComo('COMPRAS')
     expect((await ir(crear(), '/no/existe')).name).toBe('no-encontrado')
+  })
+
+  it('stock bajo: ADMIN, BODEGUERO y COMPRAS (no VENDEDOR)', async () => {
+    iniciarSesionComo('VENDEDOR')
+    expect((await ir(crear(), '/productos/stock-bajo')).name).toBe('sin-permiso')
+    setActivePinia(createPinia())
+    iniciarSesionComo('COMPRAS')
+    expect((await ir(crear(), '/productos/stock-bajo')).name).toBe('stock-bajo')
   })
 
   it('clientes: ADMIN y VENDEDOR; el detalle solo acepta un id numérico', async () => {
