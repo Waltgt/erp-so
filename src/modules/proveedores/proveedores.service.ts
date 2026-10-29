@@ -33,10 +33,12 @@ type ProveedorConConteo = Proveedor & { _count: { productos: number } };
 export class ProveedoresService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Cada fila incluye productosActivos (el mismo conteo que el detalle, en la
+  // misma consulta)
   async listar(
     query: ListarProveedoresQueryDto,
     actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<Proveedor>> {
+  ): Promise<RespuestaPaginada<ProveedorDetalle>> {
     if (query.incluirInactivos && !ROLES_VEN_INACTIVOS.includes(actor.rol)) {
       throw new ForbiddenException(
         'Solo ADMIN y COMPRAS pueden ver proveedores inactivos',
@@ -52,11 +54,12 @@ export class ProveedoresService {
       this.prisma.proveedor.findMany({
         where,
         orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+        include: CONTAR_PRODUCTOS_ACTIVOS,
         ...paginacionPrisma(query),
       }),
       this.prisma.proveedor.count({ where }),
     ]);
-    return respuestaPaginada(data, total, query);
+    return respuestaPaginada(data.map(conConteo), total, query);
   }
 
   // Incluye el conteo de productos activos. Responde aunque esté inactivo.

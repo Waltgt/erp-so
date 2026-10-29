@@ -14,8 +14,12 @@ function crearPrismaFalso(proveedores: Proveedor[], productosActivos: number) {
 
   return {
     proveedor: {
-      findMany: ({ where }: { where: Where }) =>
-        Promise.resolve(proveedores.filter((p) => coincide(p, where))),
+      findMany: (args: { where: Where; include?: unknown }) =>
+        Promise.resolve(
+          proveedores
+            .filter((p) => coincide(p, args.where))
+            .map((p) => conConteo(p, args)),
+        ),
       count: ({ where }: { where: Where }) =>
         Promise.resolve(proveedores.filter((p) => coincide(p, where)).length),
       findUnique: (args: { where: Where; include?: unknown }) => {
@@ -169,6 +173,14 @@ describe('Proveedores (e2e)', () => {
     expect((res.body as { message: string[] }).message).toEqual([
       'nit "CF" (consumidor final) no es válido aquí',
     ]);
+  });
+
+  it('GET (listado) incluye productosActivos en cada fila', async () => {
+    const res = await prueba.como(Rol.BODEGUERO).get('/api/proveedores');
+    expect(res.status).toBe(200);
+    const [fila] = (res.body as { data: unknown[] }).data;
+    expect(fila).toMatchObject({ id: 1, productosActivos: 3 });
+    expect(fila).not.toHaveProperty('_count');
   });
 
   it('GET /:id incluye productosActivos', async () => {

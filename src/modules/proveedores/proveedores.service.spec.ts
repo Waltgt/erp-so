@@ -85,6 +85,20 @@ describe('ProveedoresService', () => {
       },
     );
 
+    it('cada fila trae productosActivos (mismo include que el detalle)', async () => {
+      prisma.proveedor.findMany.mockResolvedValue([
+        { id: 2, nombre: 'P', _count: { productos: 4 } },
+      ]);
+      prisma.proveedor.count.mockResolvedValue(1);
+
+      const r = await servicio.listar(base, actor(Rol.COMPRAS));
+
+      expect(primerArgumento(prisma.proveedor.findMany)).toMatchObject({
+        include: CONTEO,
+      });
+      expect(r.data).toEqual([{ id: 2, nombre: 'P', productosActivos: 4 }]);
+    });
+
     it('BODEGUERO con incluirInactivos: 403', async () => {
       await expect(
         servicio.listar(

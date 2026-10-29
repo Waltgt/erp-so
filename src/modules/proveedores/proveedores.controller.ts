@@ -54,13 +54,14 @@ export class ProveedoresController {
     summary: 'Listado paginado; ?buscar= por nombre o NIT',
     description:
       'Solo activos. ?incluirInactivos=true: ADMIN y COMPRAS (BODEGUERO: 403). ' +
+      'Cada fila incluye productosActivos. ' +
       'La búsqueda no distingue mayúsculas, pero NO ignora tildes.',
   })
   @ApiOkResponse({ type: ProveedoresPaginadosDto })
   listar(
     @Query() query: ListarProveedoresQueryDto,
     @UsuarioActual() actor: UsuarioPublico,
-  ): Promise<RespuestaPaginada<Proveedor>> {
+  ): Promise<RespuestaPaginada<ProveedorDetalle>> {
     return this.proveedores.listar(query, actor);
   }
 

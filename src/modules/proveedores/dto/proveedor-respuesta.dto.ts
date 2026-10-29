@@ -32,7 +32,7 @@ export class ProveedorRespuestaDto {
   actualizadoEn!: Date;
 }
 
-// GET /:id y DELETE: incluyen cuántos productos activos tiene asociados
+// GET, GET /:id y DELETE: incluyen cuántos productos activos tiene asociados
 export class ProveedorDetalleDto extends ProveedorRespuestaDto {
   @ApiProperty({
     example: 3,
@@ -42,8 +42,8 @@ export class ProveedorDetalleDto extends ProveedorRespuestaDto {
 }
 
 export class ProveedoresPaginadosDto {
-  @ApiProperty({ type: [ProveedorRespuestaDto] })
-  data!: ProveedorRespuestaDto[];
+  @ApiProperty({ type: [ProveedorDetalleDto] })
+  data!: ProveedorDetalleDto[];
 
   @ApiProperty({ example: 41 })
   total!: number;
