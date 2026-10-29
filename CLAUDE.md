@@ -46,6 +46,10 @@ sobre una red host-only. Este repositorio contiene el backend (NestJS + Prisma 7
 9. Las tareas de módulos (docs/modulos/) solo tocan código del repositorio.
     Cualquier cambio de infraestructura (Nginx, ufw, PostgreSQL, Garage, PM2)
     se anota en docs/infra/pendientes.md en lugar de pedírmelo en ese momento.
+10. El repositorio tiene dos proyectos TypeScript independientes: el backen
+    (raíz, tsconfig.json) y el frontend (frontend/, su propio tsconfig).
+    frontend/ está excluido del tsconfig del backend. No cambies esa exclusión
+    ni mezcles imports entre ambos proyectos.
 
 ## Decisiones de diseño (no cambiarlas sin preguntar)
 
