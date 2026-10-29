@@ -47,8 +47,14 @@ function campoDelMensaje(mensaje: string, camposConocidos: readonly string[]): s
 // "Registro duplicado: <campo>" (ej. "Registro duplicado: email")
 const DUPLICADO = /^Registro duplicado: (\w+)$/
 
+// Índices con mensaje propio en el backend (prisma-exception.filter.ts)
+const DUPLICADOS_CON_MENSAJE: Record<string, string> = {
+  'NIT ya registrado': 'nit',
+  'SKU ya registrado': 'sku',
+}
+
 function campoDuplicado(mensaje: string, camposConocidos: readonly string[]): string | null {
-  const campo = DUPLICADO.exec(mensaje)?.[1]
+  const campo = DUPLICADOS_CON_MENSAJE[mensaje] ?? DUPLICADO.exec(mensaje)?.[1]
   return campo && camposConocidos.includes(campo) ? campo : null
 }
 

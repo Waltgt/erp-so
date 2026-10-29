@@ -48,6 +48,19 @@ export const rutas: RouteRecordRaw[] = [
         meta: { roles: ['ADMIN'], titulo: 'Usuarios' },
       },
       {
+        path: 'clientes',
+        name: 'clientes',
+        component: () => import('@/views/clientes/ClientesVista.vue'),
+        meta: { roles: ['ADMIN', 'VENDEDOR'], titulo: 'Clientes' },
+      },
+      {
+        path: 'clientes/:id(\\d+)',
+        name: 'cliente',
+        component: () => import('@/views/clientes/ClienteDetalleVista.vue'),
+        props: true,
+        meta: { roles: ['ADMIN', 'VENDEDOR'], titulo: 'Cliente' },
+      },
+      {
         path: 'sin-permiso',
         name: 'sin-permiso',
         component: () => import('@/views/sistema/SinPermisoVista.vue'),

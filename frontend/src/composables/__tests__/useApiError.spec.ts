@@ -86,6 +86,12 @@ describe('traducirError', () => {
     expect(sinCampo.mensajes).toEqual(['Registro duplicado: email'])
   })
 
+  it('409 "NIT ya registrado" (índice con mensaje propio): junto al campo nit', () => {
+    const r = traducirError(errorHttp(409, 'NIT ya registrado'), ['nit', 'nombre'])
+    expect(r.campos).toEqual({ nit: ['NIT ya registrado'] })
+    expect(r.mensajes).toEqual([])
+  })
+
   it('otro 409 (último admin) va al Toast aunque haya campos', () => {
     const r = traducirError(
       errorHttp(409, 'No se puede desactivar al último administrador activo'),

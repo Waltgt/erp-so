@@ -1,13 +1,8 @@
 import type { Rol } from '@/types/auth'
 import { EMAIL_MAX, NOMBRE_MAX, PASSWORD_MAX, PASSWORD_MIN } from '@/types/usuarios'
+import { FORMATO_EMAIL, type Errores } from './comun'
 
-// Validaciones en el cliente: lo mismo que valida el backend, para avisar
-// antes de enviar. La respuesta del servidor sigue siendo la autoridad.
-// Cada función devuelve { campo: mensaje }; vacío = sin errores.
-export type Errores = Record<string, string>
-
-// No es la regla completa de IsEmail: solo atrapa lo evidente
-const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export { erroresDelServidor, type Errores } from './comun'
 
 function validarPasswordNueva(
   errores: Errores,
@@ -85,11 +80,4 @@ export function validarRestablecerPassword(password: string, confirmacion: strin
   const errores: Errores = {}
   validarPasswordNueva(errores, 'password', password, confirmacion, 'confirmacion')
   return errores
-}
-
-// Errores del servidor (traducirError().campos trae listas) al mismo formato
-export function erroresDelServidor(campos: Record<string, string[]>): Errores {
-  return Object.fromEntries(
-    Object.entries(campos).map(([campo, mensajes]) => [campo, mensajes.join(' ')]),
-  )
 }

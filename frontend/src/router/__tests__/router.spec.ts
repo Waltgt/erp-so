@@ -94,11 +94,24 @@ describe('router', () => {
     expect((await ir(crear(), '/no/existe')).name).toBe('no-encontrado')
   })
 
+  it('clientes: ADMIN y VENDEDOR; el detalle solo acepta un id numérico', async () => {
+    iniciarSesionComo('BODEGUERO')
+    expect((await ir(crear(), '/clientes/3')).name).toBe('sin-permiso')
+    setActivePinia(createPinia())
+    iniciarSesionComo('VENDEDOR')
+    const router = crear()
+    const r = await ir(router, '/clientes/3')
+    expect(r.name).toBe('cliente')
+    expect(r.params.id).toBe('3')
+    expect((await ir(router, '/clientes/abc')).name).toBe('no-encontrado')
+  })
+
   it('menú: según meta.roles, y solo con rutas que existen', () => {
     const router = crear()
     const nombres = (rol: Rol) => menuPara(router, rol).map((e) => e.ruta)
-    expect(nombres('ADMIN')).toEqual(['inicio', 'productos', 'usuarios'])
-    expect(nombres('VENDEDOR')).toEqual(['inicio', 'productos'])
+    expect(nombres('ADMIN')).toEqual(['inicio', 'clientes', 'productos', 'usuarios'])
+    expect(nombres('VENDEDOR')).toEqual(['inicio', 'clientes', 'productos'])
+    expect(nombres('BODEGUERO')).toEqual(['inicio', 'productos'])
     expect(menuPara(router, null)).toEqual([])
   })
 })
