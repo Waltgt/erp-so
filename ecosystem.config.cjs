@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'erp-api',
-      cwd: '/srv/erp-app/app',
+      cwd: '/srv/erp-app/erp-so',
       script: 'dist/main.js',
       exec_mode: 'fork',
       instances: 1,
